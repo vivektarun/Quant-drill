@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>Quant Drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0f1117;--sf:#1a1d27;--sf2:#22263a;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --tx:#f0f2f8;--mu:#7b80a0;
+  --ac:#6c8ef7;--ac2:#8b5cf6;
+  --gr:#34d399;--rd:#f87171;--am:#fbbf24;
+  --fn:'Space Mono',monospace;--fs:'DM Sans',sans-serif;
+  --r:12px;--rs:8px;
+  /* iPhone 15 safe areas */
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html{height:100%;height:-webkit-fill-available}
+body{height:100%;height:-webkit-fill-available;background:var(--bg);color:var(--tx);font-family:var(--fs);overflow:hidden;display:flex;flex-direction:column}
+
+/* ── SCREENS ── */
+.screen{display:none;width:100%;height:100%;height:-webkit-fill-available;flex-direction:column}
+.screen.active{display:flex}
+
+/* ══════════ HOME (scrollable) ══════════ */
+#home{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(20px + var(--sat)) 20px calc(28px + var(--sab))}
+.home-inner{max-width:430px;margin:0 auto;width:100%}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--ac),var(--ac2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--fn);font-size:14px;color:#fff;font-weight:700}
+.logo-text{font-family:var(--fn);font-size:13px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase}
+.home-title{font-size:26px;font-weight:600;line-height:1.2;margin-bottom:5px}
+.home-title span{background:linear-gradient(120deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.home-sub{font-size:14px;color:var(--mu);margin-bottom:24px;line-height:1.5}
+.sh{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin-bottom:10px}
+.topic-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:7px}
+.tbtn{background:var(--sf);border:1.5px solid var(--b1);border-radius:var(--r);padding:13px 11px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s;position:relative;overflow:hidden}
+.tbtn.sel{border-color:var(--ac);background:rgba(108,142,247,.1)}
+.tbtn:active{transform:scale(.97)}
+.ti{font-size:20px;margin-bottom:7px}
+.tn{font-size:13px;font-weight:600;color:var(--tx);line-height:1.2}
+.tr{font-size:11px;color:var(--mu);margin-top:2px;font-family:var(--fn)}
+.cdot{position:absolute;top:9px;right:9px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--ac2));display:none;align-items:center;justify-content:center}
+.cdot svg{width:9px;height:9px;stroke:#fff;stroke-width:2.5;fill:none}
+.tbtn.sel .cdot{display:flex}
+.err-msg{font-size:12px;color:var(--rd);margin-bottom:12px;padding:9px 12px;background:rgba(248,113,113,.08);border-radius:var(--rs);border:1px solid rgba(248,113,113,.2);display:none}
+.err-msg.show{display:block}
+.qcrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.qcl{font-size:13px;color:var(--mu)}
+.qcbtns{display:flex;gap:6px}
+.qcb{background:var(--sf);border:1.5px solid var(--b1);border-radius:var(--rs);padding:6px 13px;font-size:13px;font-weight:600;color:var(--mu);cursor:pointer;font-family:var(--fn);transition:all .15s}
+.qcb.active{background:rgba(108,142,247,.15);border-color:var(--ac);color:var(--ac)}
+.start-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--ac),var(--ac2));border:none;border-radius:var(--r);font-size:16px;font-weight:600;color:#fff;cursor:pointer;font-family:var(--fs);letter-spacing:.02em;transition:opacity .15s}
+.start-btn:active{opacity:.88}
+
+/* ══════════ QUIZ (NO SCROLL — fixed layout) ══════════ */
+#quiz{
+  overflow:hidden;
+  /* top: status bar safe area; bottom: home indicator safe area */
+  padding-top:var(--sat);
+  padding-bottom:var(--sab);
+  display:none;
+  flex-direction:column;
+}
+#quiz.active{display:flex}
+
+/* Header row */
+.qhdr{padding:10px 16px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.qexit{background:var(--sf);border:1.5px solid var(--b1);border-radius:var(--rs);padding:6px 11px;font-size:12px;color:var(--mu);cursor:pointer;display:flex;align-items:center;gap:5px;font-family:var(--fs)}
+.qexit:active{background:var(--sf2)}
+.qprog{font-size:12px;color:var(--mu);font-family:var(--fn)}
+
+/* Progress bar */
+.pbwrap{margin:8px 16px 0;height:3px;background:var(--sf2);border-radius:2px;overflow:hidden;flex-shrink:0}
+.pbfill{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:2px;transition:width .3s}
+
+/* Quiz body — fills remaining space above numpad */
+.qbody{padding:10px 16px 8px;display:flex;flex-direction:column;flex:1;min-height:0;gap:0}
+
+.tpill{display:inline-flex;align-items:center;background:var(--sf2);border:1px solid var(--b2);border-radius:20px;padding:3px 11px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:8px;flex-shrink:0}
+
+/* Timer */
+.tmrow{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-shrink:0}
+.tmbar{flex:1;height:5px;background:var(--sf2);border-radius:3px;overflow:hidden}
+.tmfill{height:100%;border-radius:3px;transition:width .08s linear,background .25s}
+.tmcnt{font-family:var(--fn);font-size:12px;font-weight:700;min-width:28px;text-align:right;transition:color .25s}
+
+/* Question card */
+.qcard{background:var(--sf);border:1.5px solid var(--b1);border-radius:14px;padding:16px 18px;text-align:center;margin-bottom:9px;position:relative;overflow:hidden;flex-shrink:0}
+.qcard::after{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(circle,rgba(108,142,247,.08),transparent 70%);pointer-events:none}
+.qtext{font-family:var(--fn);font-size:24px;font-weight:700;color:var(--tx);line-height:1.25;word-break:break-all}
+.qsub{font-size:11px;color:var(--mu);margin-top:5px}
+.qstreak{position:absolute;top:10px;right:12px;font-size:11px;font-weight:600;color:var(--am);font-family:var(--fn)}
+
+/* Answer display */
+.ansdisplay{width:100%;padding:11px 16px;font-family:var(--fn);font-size:22px;font-weight:700;background:var(--sf);border:2px solid var(--b2);border-radius:var(--r);color:var(--tx);text-align:center;min-height:50px;display:flex;align-items:center;justify-content:center;letter-spacing:.02em;flex-shrink:0;margin-bottom:8px}
+.ansdisplay .ph{color:var(--mu);font-size:13px;font-weight:400;font-family:var(--fs)}
+.ansdisplay .cur{display:inline-block;width:2px;height:24px;background:var(--ac);border-radius:1px;margin-left:2px;animation:blink .9s step-end infinite;vertical-align:middle}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.ansdisplay.correct{border-color:var(--gr);background:rgba(52,211,153,.06);color:var(--gr)}
+.ansdisplay.wrong{border-color:var(--rd);background:rgba(248,113,113,.06);color:var(--rd)}
+
+/* Fraction input */
+.ansfrac{display:none;gap:7px;align-items:flex-start;margin-bottom:8px;flex-shrink:0}
+.ansfrac.active{display:flex}
+.ffw{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.ffl{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;font-weight:600;height:13px}
+.ff{width:100%;padding:8px 4px;font-family:var(--fn);font-size:18px;font-weight:700;background:var(--sf);border:2px solid var(--b2);border-radius:var(--rs);color:var(--tx);text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s}
+.ff.focused{border-color:var(--ac)}
+.ff .ph{color:var(--mu);font-size:12px;font-family:var(--fs);font-weight:400}
+.ff .cur{display:inline-block;width:2px;height:18px;background:var(--ac);border-radius:1px;margin-left:1px;animation:blink .9s step-end infinite;vertical-align:middle}
+.ff.correct{border-color:var(--gr);background:rgba(52,211,153,.06);color:var(--gr)}
+.ff.wrong{border-color:var(--rd);background:rgba(248,113,113,.06);color:var(--rd)}
+.fracbar{width:88%;height:2px;background:var(--b2);border-radius:1px;margin:2px 0}
+.ndwrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1.6}
+.plussign{font-size:18px;color:var(--mu);flex-shrink:0;margin-top:26px}
+
+/* Feedback */
+.fbbox{border-radius:var(--rs);padding:8px 12px;font-size:12px;font-weight:500;margin-bottom:7px;opacity:0;transition:opacity .18s;display:flex;align-items:flex-start;gap:8px;flex-shrink:0;min-height:34px}
+.fbbox.show{opacity:1}
+.fbbox.correct{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);color:var(--gr)}
+.fbbox.wrong{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:var(--rd)}
+.fbbox.warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);color:var(--am)}
+.fbicon{font-size:15px;flex-shrink:0}
+.fbright{font-size:11px;margin-top:1px;opacity:.8}
+
+/* Action buttons */
+.btnrow{display:flex;gap:8px;flex-shrink:0}
+.abtn{flex:1;padding:12px;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--fs);border:none;transition:opacity .12s}
+.abtn.primary{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
+.abtn.secondary{background:var(--sf2);border:1.5px solid var(--b2);color:var(--mu)}
+.abtn:active{opacity:.8}
+.abtn:disabled{opacity:.35;pointer-events:none}
+
+/* ══════════ NUMPAD — phone dialer layout ══════════ */
+/*
+  Dialer layout:
+  1  2  3
+  4  5  6
+  7  8  9
+  ·  0  ⌫
+  [  Submit / Next  ]   <- wide row
+  Optional: mode toggle above, Next▸ replaces ⌫ for fractions
+*/
+.numpad{
+  background:var(--sf);
+  border-top:1px solid var(--b2);
+  padding:8px 12px calc(8px);
+  flex-shrink:0;
+  max-width:430px;
+  width:100%;
+  margin:0 auto;
+}
+.moderow{display:flex;gap:6px;margin-bottom:8px}
+.mbtn{flex:1;padding:7px 4px;font-size:11px;font-weight:600;background:var(--sf2);border:1px solid var(--b1);border-radius:var(--rs);color:var(--mu);cursor:pointer;font-family:var(--fs);transition:all .15s;text-transform:uppercase;letter-spacing:.04em}
+.mbtn.active{background:rgba(108,142,247,.15);border-color:var(--ac);color:var(--ac)}
+/* 3-column dialer grid */
+.npgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:7px}
+.nk{background:var(--sf2);border:1px solid var(--b2);border-radius:11px;height:52px;font-size:22px;font-weight:600;color:var(--tx);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--fn);transition:background .08s,transform .08s}
+.nk:active{background:rgba(255,255,255,.14);transform:scale(.9)}
+.nk.del{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.2);color:var(--rd);font-size:18px}
+.nk.next{background:rgba(108,142,247,.13);border-color:rgba(108,142,247,.28);color:var(--ac);font-size:13px;font-family:var(--fs);font-weight:600}
+.nk.dot{font-size:28px;line-height:1;color:var(--mu)}
+.nk.blank{background:transparent;border-color:transparent;pointer-events:none}
+/* Submit row — single wide button */
+.nksubmit{width:100%;height:50px;background:linear-gradient(135deg,var(--ac),var(--ac2));border:none;border-radius:11px;font-size:15px;font-weight:600;color:#fff;cursor:pointer;font-family:var(--fs);display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .12s}
+.nksubmit:active{opacity:.85}
+
+/* ══════════ RESULT ══════════ */
+#result{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(20px + var(--sat)) 20px calc(24px + var(--sab))}
+.res-inner{max-width:430px;margin:0 auto;width:100%}
+.rhdr{text-align:center;margin-bottom:20px}
+.remoji{font-size:48px;margin-bottom:10px}
+.rtitle{font-size:22px;font-weight:700;margin-bottom:4px}
+.rsub{font-size:13px;color:var(--mu)}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.scard{background:var(--sf);border:1.5px solid var(--b1);border-radius:var(--r);padding:13px 8px;text-align:center}
+.sval{font-family:var(--fn);font-size:24px;font-weight:700;line-height:1}
+.sval.g{color:var(--gr)}.sval.r{color:var(--rd)}.sval.a{color:var(--am)}
+.slbl{font-size:10px;color:var(--mu);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.egrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.ecard{background:var(--sf);border:1.5px solid var(--b1);border-radius:var(--rs);padding:11px 13px;display:flex;align-items:center;gap:9px}
+.eicon{font-size:18px}
+.elbl{font-size:11px;color:var(--mu)}
+.eval{font-size:14px;font-weight:600;font-family:var(--fn)}
+.msec{margin-bottom:18px}
+.mtoggle{width:100%;background:var(--sf);border:1.5px solid var(--b1);border-radius:var(--rs);padding:11px 14px;color:var(--tx);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:var(--fs)}
+.mtoggle svg{transition:transform .2s}
+.mtoggle.open svg{transform:rotate(180deg)}
+.mlist{display:none;margin-top:7px}
+.mlist.open{display:block}
+.mitem{background:var(--sf);border:1px solid var(--b1);border-radius:var(--rs);padding:9px 11px;margin-bottom:6px}
+.mq{font-family:var(--fn);font-size:12px;color:var(--mu);margin-bottom:3px}
+.mrow{display:flex;gap:12px;font-size:12px;flex-wrap:wrap}
+.mc{color:var(--gr);font-weight:600}
+.mg{color:var(--rd)}
+.rbtns{display:flex;flex-direction:column;gap:9px}
+.rbtn{width:100%;padding:14px;border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;border:none;font-family:var(--fs)}
+.rbtn.primary{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
+.rbtn.secondary{background:var(--sf2);color:var(--mu);border:1.5px solid var(--b2)}
+.rbtn:active{opacity:.85}
+.cmsg{text-align:center;font-size:12px;color:var(--am);font-weight:600;margin:7px 0 14px;min-height:17px}
+
+/* Modal */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(6px)}
+.mbg.show{display:flex}
+.modal{background:var(--sf);border:1.5px solid var(--b2);border-radius:16px;padding:22px;max-width:320px;width:100%}
+.mtitle{font-size:16px;font-weight:600;margin-bottom:7px}
+.mtext{font-size:13px;color:var(--mu);line-height:1.5;margin-bottom:18px}
+.mbtns{display:flex;gap:9px}
+.mbtn2{flex:1;padding:12px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--fs)}
+.mbtn2.cancel{background:var(--sf2);color:var(--mu);border:1.5px solid var(--b2)}
+.mbtn2.confirm{background:var(--rd);color:#fff}
+
+/* Animations */
+@keyframes pop{0%{transform:scale(.87);opacity:0}70%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.apop{animation:pop .22s ease forwards}
+.ashake{animation:shake .28s ease}
+</style>
+</head>
+<body>
+
+<!-- ══ HOME ══ -->
+<div id="home" class="screen active">
+<div class="home-inner">
+  <div class="logo">
+    <div class="logo-mark">Q</div>
+    <div class="logo-text">Quant Drill</div>
+  </div>
+  <div class="home-title">Ace the <span>Quant</span><br>section</div>
+  <div class="home-sub">Banking exam prep — speed drill for maths tables, roots &amp; fractions</div>
+
+  <div class="sh" style="margin-bottom:10px">Choose topics</div>
+  <div class="topic-grid">
+    <button class="tbtn" data-topic="multiplication" onclick="toggleT(this)">
+      <div class="cdot"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="ti">✕</div><div class="tn">Multiplication</div><div class="tr">1–20 tables</div>
+    </button>
+    <button class="tbtn" data-topic="squares" onclick="toggleT(this)">
+      <div class="cdot"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="ti">²</div><div class="tn">Squares</div><div class="tr">1² → 50²</div>
+    </button>
+    <button class="tbtn" data-topic="cubes" onclick="toggleT(this)">
+      <div class="cdot"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="ti">³</div><div class="tn">Cubes</div><div class="tr">1³ → 50³</div>
+    </button>
+    <button class="tbtn" data-topic="sqrt" onclick="toggleT(this)">
+      <div class="cdot"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="ti">√</div><div class="tn">Square Roots</div><div class="tr">√1 → √20</div>
+    </button>
+    <button class="tbtn" data-topic="cbrt" onclick="toggleT(this)">
+      <div class="cdot"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="ti">∛</div><div class="tn">Cube Roots</div><div class="tr">∛1 → ∛20</div>
+    </button>
+    <button class="tbtn" data-topic="percentage" onclick="toggleT(this)">
+      <div class="cdot"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="ti">%</div><div class="tn">% → Fraction</div><div class="tr">proper &amp; mixed</div>
+    </button>
+  </div>
+  <div id="sel-err" class="err-msg">⚠ Select at least one topic</div>
+
+  <div class="sh">Questions per session</div>
+  <div class="qcrow">
+    <div class="qcl">How many?</div>
+    <div class="qcbtns">
+      <button class="qcb" data-n="10" onclick="setQC(this)">10</button>
+      <button class="qcb active" data-n="20" onclick="setQC(this)">20</button>
+      <button class="qcb" data-n="30" onclick="setQC(this)">30</button>
+    </div>
+  </div>
+  <button class="start-btn" onclick="startPractice()">Start Practice →</button>
+</div>
+</div>
+
+<!-- ══ QUIZ ══ -->
+<div id="quiz" class="screen">
+  <!-- Header -->
+  <div class="qhdr">
+    <button class="qexit" onclick="confirmExit()">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg>
+      Exit
+    </button>
+    <div class="qprog" id="qprog">1 / 20</div>
+  </div>
+  <div class="pbwrap"><div class="pbfill" id="pbfill" style="width:0%"></div></div>
+
+  <!-- Body -->
+  <div class="qbody">
+    <div class="tpill" id="tpill">—</div>
+    <div class="tmrow">
+      <div class="tmbar"><div class="tmfill" id="tmfill" style="width:100%"></div></div>
+      <div class="tmcnt" id="tmcnt">10</div>
+    </div>
+    <div class="qcard" id="qcard">
+      <div class="qstreak" id="qstreak"></div>
+      <div class="qtext" id="qtext"></div>
+      <div class="qsub" id="qsub"></div>
+    </div>
+
+    <!-- Single answer -->
+    <div class="ansdisplay" id="ansdisplay"><span class="ph">Your answer…</span></div>
+    <!-- Fraction answer -->
+    <div class="ansfrac" id="ansfrac">
+      <div class="ffw" id="col-whole">
+        <div class="ffl">Whole</div>
+        <div class="ff" id="ff-whole" onclick="ffocus('whole')"><span class="ph">0</span></div>
+      </div>
+      <div class="plussign" id="plussign">+</div>
+      <div class="ndwrap">
+        <div class="ffl">Numerator</div>
+        <div class="ff" id="ff-num" onclick="ffocus('num')"><span class="ph">p</span></div>
+        <div class="fracbar"></div>
+        <div class="ffl">Denominator</div>
+        <div class="ff" id="ff-den" onclick="ffocus('den')"><span class="ph">q</span></div>
+      </div>
+    </div>
+
+    <div class="fbbox" id="fbbox">
+      <span class="fbicon" id="fbicon"></span>
+      <div><div id="fbtext"></div><div class="fbright" id="fbright"></div></div>
+    </div>
+    <div class="btnrow">
+      <button class="abtn secondary" id="skipbtn" onclick="skipQ()">Skip</button>
+      <button class="abtn primary" id="actionbtn" onclick="handleAction()">Submit</button>
+    </div>
+  </div>
+
+  <!-- Numpad — phone dialer layout -->
+  <div class="numpad" id="numpad">
+    <!-- Mode row — fraction only -->
+    <div class="moderow" id="moderow" style="display:none">
+      <button class="mbtn active" id="mb-proper" onclick="setMode('proper')">Proper  p/q</button>
+      <button class="mbtn" id="mb-mixed" onclick="setMode('mixed')">Mixed  w p/q</button>
+    </div>
+    <!-- Dialer grid: 3 columns -->
+    <div class="npgrid">
+      <!-- Row 1: 1 2 3 -->
+      <button class="nk" ontouchstart="nkp('1')" onclick="nkp('1')">1</button>
+      <button class="nk" ontouchstart="nkp('2')" onclick="nkp('2')">2</button>
+      <button class="nk" ontouchstart="nkp('3')" onclick="nkp('3')">3</button>
+      <!-- Row 2: 4 5 6 -->
+      <button class="nk" ontouchstart="nkp('4')" onclick="nkp('4')">4</button>
+      <button class="nk" ontouchstart="nkp('5')" onclick="nkp('5')">5</button>
+      <button class="nk" ontouchstart="nkp('6')" onclick="nkp('6')">6</button>
+      <!-- Row 3: 7 8 9 -->
+      <button class="nk" ontouchstart="nkp('7')" onclick="nkp('7')">7</button>
+      <button class="nk" ontouchstart="nkp('8')" onclick="nkp('8')">8</button>
+      <button class="nk" ontouchstart="nkp('9')" onclick="nkp('9')">9</button>
+      <!-- Row 4: dot / 0 / del  — dot hidden for frac, next shown instead -->
+      <button class="nk dot" id="nk-dot" ontouchstart="nkDot()" onclick="nkDot()">·</button>
+      <button class="nk next" id="nk-next" ontouchstart="nkNext()" onclick="nkNext()" style="display:none;font-size:12px">Next ▸</button>
+      <button class="nk blank" id="nk-blank" style="display:none"></button>
+      <button class="nk" ontouchstart="nkp('0')" onclick="nkp('0')">0</button>
+      <button class="nk del" ontouchstart="nkDel()" onclick="nkDel()">⌫</button>
+    </div>
+    <!-- Submit row -->
+    <button class="nksubmit" id="nksubmit" ontouchstart="handleAction()" onclick="handleAction()">Submit ↵</button>
+  </div>
+</div>
+
+<!-- ══ RESULT ══ -->
+<div id="result" class="screen">
+<div class="res-inner">
+  <div class="rhdr">
+    <div class="remoji" id="remoji">🎯</div>
+    <div class="rtitle" id="rtitle">Session Complete</div>
+    <div class="rsub" id="rsub">Here's how you did</div>
+  </div>
+  <div class="sgrid">
+    <div class="scard"><div class="sval g" id="r-c">0</div><div class="slbl">Correct</div></div>
+    <div class="scard"><div class="sval r" id="r-w">0</div><div class="slbl">Wrong</div></div>
+    <div class="scard"><div class="sval a" id="r-p">0%</div><div class="slbl">Accuracy</div></div>
+  </div>
+  <div class="egrid">
+    <div class="ecard"><div class="eicon">⚡</div><div><div class="elbl">Best streak</div><div class="eval" id="r-str">0</div></div></div>
+    <div class="ecard"><div class="eicon">⏱</div><div><div class="elbl">Avg time</div><div class="eval" id="r-avg">—</div></div></div>
+    <div class="ecard"><div class="eicon">💨</div><div><div class="elbl">Fastest</div><div class="eval" id="r-fast">—</div></div></div>
+    <div class="ecard"><div class="eicon">⏭</div><div><div class="elbl">Skipped</div><div class="eval" id="r-sk">0</div></div></div>
+  </div>
+  <div class="msec" id="msec">
+    <button class="mtoggle" id="mtoggle" onclick="toggleMistakes()">
+      <span id="mt-txt">Show mistakes (0)</span>
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2,4 6.5,9 11,4"/></svg>
+    </button>
+    <div class="mlist" id="mlist"></div>
+  </div>
+  <div class="cmsg" id="cmsg"></div>
+  <div class="rbtns">
+    <button class="rbtn primary" onclick="restartSame()">Retry same topics</button>
+    <button class="rbtn secondary" onclick="goHome()">← Change topics</button>
+  </div>
+</div>
+</div>
+
+<!-- Exit modal -->
+<div class="mbg" id="exitmodal">
+  <div class="modal">
+    <div class="mtitle">Exit session?</div>
+    <div class="mtext">Your progress will be lost. Sure?</div>
+    <div class="mbtns">
+      <button class="mbtn2 cancel" onclick="closeModal()">Continue</button>
+      <button class="mbtn2 confirm" onclick="forceExit()">Exit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════
+   DATA
+═══════════════════════════════ */
+// Precompute sqrt/cbrt tables with 4 decimal precision
+// √1..√20 and ∛1..∛20 — these are the radicands (numbers under the root)
+const SQRT_TABLE = {};
+for(let n=1;n<=20;n++) SQRT_TABLE[n] = Math.sqrt(n).toFixed(4).replace(/\.?0+$/,'');
+// But we keep full 4dp for non-integers:
+const SQRT_ANSWERS = {};
+for(let n=1;n<=20;n++){
+  const v=Math.sqrt(n);
+  SQRT_ANSWERS[n] = Number.isInteger(v) ? String(v) : v.toFixed(4);
+}
+const CBRT_ANSWERS = {};
+for(let n=1;n<=20;n++){
+  const v=Math.cbrt(n);
+  CBRT_ANSWERS[n] = Number.isInteger(v) ? String(v) : v.toFixed(4);
+}
+
+const PCT=[
+  {q:'50%',a:'1/2'},{q:'25%',a:'1/4'},{q:'75%',a:'3/4'},
+  {q:'12.5%',a:'1/8'},{q:'37.5%',a:'3/8'},{q:'62.5%',a:'5/8'},{q:'87.5%',a:'7/8'},
+  {q:'6.25%',a:'1/16'},{q:'18.75%',a:'3/16'},{q:'31.25%',a:'5/16'},
+  {q:'43.75%',a:'7/16'},{q:'56.25%',a:'9/16'},{q:'68.75%',a:'11/16'},
+  {q:'33.33%',a:'1/3'},{q:'66.67%',a:'2/3'},
+  {q:'16.67%',a:'1/6'},{q:'83.33%',a:'5/6'},
+  {q:'10%',a:'1/10'},{q:'20%',a:'1/5'},{q:'30%',a:'3/10'},
+  {q:'40%',a:'2/5'},{q:'60%',a:'3/5'},{q:'70%',a:'7/10'},
+  {q:'80%',a:'4/5'},{q:'90%',a:'9/10'},
+  {q:'5%',a:'1/20'},{q:'15%',a:'3/20'},{q:'35%',a:'7/20'},
+  {q:'45%',a:'9/20'},{q:'55%',a:'11/20'},{q:'65%',a:'13/20'},
+  {q:'85%',a:'17/20'},{q:'95%',a:'19/20'},
+  {q:'14.29%',a:'1/7'},{q:'28.57%',a:'2/7'},{q:'42.86%',a:'3/7'},
+  {q:'57.14%',a:'4/7'},{q:'71.43%',a:'5/7'},{q:'85.71%',a:'6/7'},
+  {q:'11.11%',a:'1/9'},{q:'22.22%',a:'2/9'},{q:'44.44%',a:'4/9'},
+  {q:'55.56%',a:'5/9'},{q:'77.78%',a:'7/9'},{q:'88.89%',a:'8/9'},
+  {q:'8.33%',a:'1/12'},{q:'41.67%',a:'5/12'},{q:'58.33%',a:'7/12'},{q:'91.67%',a:'11/12'},
+  {q:'2%',a:'1/50'},{q:'4%',a:'1/25'},{q:'8%',a:'2/25'},{q:'1%',a:'1/100'},
+  {q:'125%',a:'1 1/4'},{q:'150%',a:'1 1/2'},{q:'175%',a:'1 3/4'},
+  {q:'133.33%',a:'1 1/3'},{q:'166.67%',a:'1 2/3'},
+  {q:'112.5%',a:'1 1/8'},{q:'137.5%',a:'1 3/8'},{q:'162.5%',a:'1 5/8'},{q:'187.5%',a:'1 7/8'},
+  {q:'250%',a:'2 1/2'},{q:'233.33%',a:'2 1/3'},{q:'266.67%',a:'2 2/3'},
+];
+
+const TOPICS={
+  multiplication:{label:'Multiplication',gen(){const a=ri(1,20),b=ri(1,20);return{q:`${a} × ${b} = ?`,a:''+a*b,hint:'',frac:false};}},
+  squares:{label:'Squares',gen(){const n=ri(1,50);return{q:`${n}² = ?`,a:''+n*n,hint:`${n} × ${n}`,frac:false};}},
+  cubes:{label:'Cubes',gen(){const n=ri(1,50);return{q:`${n}³ = ?`,a:''+n*n*n,hint:`${n}³`,frac:false};}},
+  sqrt:{label:'Square Root',gen(){
+    const n=ri(1,20);
+    const ans=SQRT_ANSWERS[n];
+    const isExact=Number.isInteger(Math.sqrt(n));
+    return{q:`√${n} = ?`,a:ans,hint:isExact?'exact integer':'to 4 decimal places',frac:false};
+  }},
+  cbrt:{label:'Cube Root',gen(){
+    const n=ri(1,20);
+    const ans=CBRT_ANSWERS[n];
+    const isExact=Number.isInteger(Math.cbrt(n));
+    return{q:`∛${n} = ?`,a:ans,hint:isExact?'exact integer':'to 4 decimal places',frac:false};
+  }},
+  percentage:{label:'% → Fraction',gen(){
+    const p=PCT[ri(0,PCT.length-1)];
+    return{q:`${p.q} = ?`,a:p.a,hint:'use numpad below',frac:true};
+  }}
+};
+
+/* ═══════════════════════════════
+   STATE
+═══════════════════════════════ */
+const S={
+  topics:[],totalQ:20,qs:[],idx:0,done:false,
+  timer:null,time:10,
+  correct:0,wrong:0,skipped:0,streak:0,best:0,
+  mistakes:[],timings:[],fastest:Infinity,tStart:0,
+  isFrac:false,mode:'proper',focus:'num',
+  val:'',whole:'',num:'',den:''
+};
+
+/* ═══════════════════════════════
+   UTILS
+═══════════════════════════════ */
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]];}return a;}
+function $i(id){return document.getElementById(id);}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$i(id).classList.add('active');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* Fraction parser + equivalence */
+function parseFrac(s){
+  s=s.trim();
+  let m;
+  m=s.match(/^(\d+)\s+(\d+)\/(\d+)$/);if(m)return{w:+m[1],n:+m[2],d:+m[3]};
+  m=s.match(/^(\d+)\/(\d+)$/);if(m)return{w:0,n:+m[1],d:+m[2]};
+  m=s.match(/^(\d+)$/);if(m)return{w:+m[1],n:0,d:1};
+  return null;
+}
+function fDec(f){return f?f.w+(f.d?f.n/f.d:0):NaN;}
+
+/* Answer checker — handles numeric & fraction equivalence, 4dp tolerance */
+function check(given,expected){
+  const g=given.trim(),e=expected.trim();
+  if(g===e)return true;
+  // numeric
+  const gn=parseFloat(g),en=parseFloat(e);
+  if(!isNaN(gn)&&!isNaN(en)&&Math.abs(gn-en)<0.00051)return true;
+  // fraction
+  const gf=parseFrac(g),ef=parseFrac(e);
+  if(gf&&ef){const gd=fDec(gf),ed=fDec(ef);if(!isNaN(gd)&&!isNaN(ed)&&Math.abs(gd-ed)<0.0001)return true;}
+  return false;
+}
+
+/* ═══════════════════════════════
+   HOME
+═══════════════════════════════ */
+function toggleT(b){b.classList.toggle('sel');$i('sel-err').classList.remove('show');}
+function setQC(b){document.querySelectorAll('.qcb').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.totalQ=+b.dataset.n;}
+function buildQs(topics,n){
+  const a=[];
+  for(let i=0;i<n;i++)a.push({...TOPICS[topics[i%topics.length]].gen(),topic:topics[i%topics.length]});
+  return shuffle(a);
+}
+function startPractice(){
+  const sel=[...$i('home').querySelectorAll('.tbtn.sel')].map(b=>b.dataset.topic);
+  if(!sel.length){$i('sel-err').classList.add('show');return;}
+  S.topics=sel;S.totalQ=+document.querySelector('.qcb.active').dataset.n;
+  S.qs=buildQs(sel,S.totalQ);
+  Object.assign(S,{idx:0,done:false,correct:0,wrong:0,skipped:0,streak:0,best:0,mistakes:[],timings:[],fastest:Infinity});
+  show('quiz');loadQ();
+}
+
+/* ═══════════════════════════════
+   QUESTION LOAD
+═══════════════════════════════ */
+function loadQ(){
+  stopTimer();S.done=false;
+  const q=S.qs[S.idx];
+  $i('qprog').textContent=`${S.idx+1} / ${S.qs.length}`;
+  $i('pbfill').style.width=`${(S.idx/S.qs.length)*100}%`;
+  $i('tpill').textContent=TOPICS[q.topic].label;
+  const card=$i('qcard');card.className='qcard apop';setTimeout(()=>card.classList.remove('apop'),280);
+  $i('qtext').textContent=q.q;$i('qsub').textContent=q.hint||'';
+  $i('qstreak').textContent=S.streak>=3?`🔥${S.streak}`:'';
+  $i('fbbox').className='fbbox';
+  $i('actionbtn').textContent='Submit';$i('actionbtn').disabled=false;
+  $i('skipbtn').disabled=false;
+
+  S.isFrac=!!q.frac;S.val='';S.whole='';S.num='';S.den='';
+
+  if(S.isFrac){
+    $i('ansdisplay').style.display='none';
+    $i('ansfrac').className='ansfrac active';
+    $i('moderow').style.display='flex';
+    setMode('proper');
+  } else {
+    $i('ansdisplay').style.display='flex';
+    $i('ansfrac').className='ansfrac';
+    $i('moderow').style.display='none';
+    renderSingle();
+  }
+  refreshNumpad();
+  S.tStart=Date.now();startTimer();
+}
+
+/* ═══════════════════════════════
+   SINGLE DISPLAY
+═══════════════════════════════ */
+function renderSingle(){
+  const d=$i('ansdisplay');
+  d.className='ansdisplay';
+  d.innerHTML=S.val===''?'<span class="ph">Your answer…</span>':esc(S.val)+'<span class="cur"></span>';
+}
+function lockSingle(state,txt){
+  const d=$i('ansdisplay');d.className='ansdisplay '+state;
+  d.innerHTML=esc(txt||S.val||'—');
+}
+
+/* ═══════════════════════════════
+   FRACTION DISPLAY
+═══════════════════════════════ */
+function setMode(m){
+  S.mode=m;S.whole='';S.num='';S.den='';
+  $i('mb-proper').className='mbtn'+(m==='proper'?' active':'');
+  $i('mb-mixed').className='mbtn'+(m==='mixed'?' active':'');
+  const mix=m==='mixed';
+  $i('col-whole').style.display=mix?'flex':'none';
+  $i('plussign').style.display=mix?'block':'none';
+  S.focus=mix?'whole':'num';
+  renderFrac();refreshNumpad();
+}
+function ffocus(f){if(S.done)return;S.focus=f;renderFrac();refreshNumpad();}
+function renderFrac(){
+  const map={whole:{id:'ff-whole',v:S.whole,ph:'0'},num:{id:'ff-num',v:S.num,ph:'p'},den:{id:'ff-den',v:S.den,ph:'q'}};
+  for(const[k,f]of Object.entries(map)){
+    const el=$i(f.id);if(!el)continue;
+    const foc=(S.focus===k&&!S.done);
+    el.className='ff'+(foc?' focused':'');
+    el.innerHTML=f.v===''?`<span class="ph">${f.ph}</span>`+(foc?'<span class="cur"></span>':''):esc(f.v)+(foc?'<span class="cur"></span>':'');
+  }
+}
+function lockFrac(st){
+  ['ff-whole','ff-num','ff-den'].forEach(id=>{const el=$i(id);if(el){el.className='ff '+st;el.querySelectorAll('.cur').forEach(c=>c.remove());}});
+}
+function getFracVal(){
+  if(S.mode==='mixed'){const w=S.whole||'0',n=S.num,d=S.den;if(!n&&!d)return w;return `${w} ${n||'0'}/${d||'1'}`;}
+  return `${S.num||'0'}/${S.den||'1'}`;
+}
+
+/* ═══════════════════════════════
+   NUMPAD
+═══════════════════════════════ */
+function refreshNumpad(){
+  const isFrac=S.isFrac,done=S.done;
+  // dot: hide for frac, show for single
+  $i('nk-dot').style.display=isFrac?'none':'flex';
+  // next: show for frac when not on last field
+  const showNext=isFrac&&!done&&S.focus!=='den';
+  $i('nk-next').style.display=showNext?'flex':'none';
+  // blank placeholder: replaces dot slot when next is shown
+  $i('nk-blank').style.display=(!isFrac)?'none':(showNext?'none':'flex');
+  // submit label
+  $i('nksubmit').textContent=done?(S.idx>=S.qs.length-1?'Results →':'Next →'):'Submit ↵';
+}
+
+let _lock=false;
+function _guard(){if(_lock)return true;_lock=true;setTimeout(()=>_lock=false,100);return false;}
+
+function nkp(d){if(_guard()||S.done)return;
+  if(S.isFrac){
+    const MAX=6;
+    if(S.focus==='whole'&&S.whole.length<MAX)S.whole+=d;
+    else if(S.focus==='num'&&S.num.length<MAX)S.num+=d;
+    else if(S.focus==='den'&&S.den.length<MAX)S.den+=d;
+    renderFrac();
+  } else {
+    if(S.val.length<12)S.val+=d;renderSingle();
+  }
+}
+function nkDel(){if(_guard()||S.done)return;
+  if(S.isFrac){
+    if(S.focus==='whole')S.whole=S.whole.slice(0,-1);
+    else if(S.focus==='num'){if(!S.num){if(S.mode==='mixed'){S.focus='whole';renderFrac();refreshNumpad();return;}}else S.num=S.num.slice(0,-1);}
+    else if(S.focus==='den'){if(!S.den){S.focus='num';renderFrac();refreshNumpad();return;}else S.den=S.den.slice(0,-1);}
+    renderFrac();
+  } else {S.val=S.val.slice(0,-1);renderSingle();}
+}
+function nkDot(){if(_guard()||S.done||S.isFrac)return;
+  if(!S.val.includes('.')&&S.val.length<11){S.val=(S.val||'0')+'.';renderSingle();}
+}
+function nkNext(){if(_guard()||S.done)return;
+  if(S.focus==='whole')S.focus='num';
+  else if(S.focus==='num')S.focus='den';
+  renderFrac();refreshNumpad();
+}
+
+/* ═══════════════════════════════
+   TIMER
+═══════════════════════════════ */
+function startTimer(){
+  S.time=10;updateTimer();
+  S.timer=setInterval(()=>{S.time=Math.max(0,S.time-.1);updateTimer();if(S.time<=0){stopTimer();timeUp();}},100);
+}
+function stopTimer(){clearInterval(S.timer);S.timer=null;}
+function updateTimer(){
+  const pct=(S.time/10)*100;
+  const fill=$i('tmfill'),cnt=$i('tmcnt');
+  fill.style.width=pct+'%';
+  const col=S.time>6?'var(--gr)':S.time>3?'var(--am)':'var(--rd)';
+  fill.style.background=col;cnt.style.color=col;cnt.textContent=Math.ceil(S.time);
+}
+function timeUp(){
+  if(S.done)return;S.done=true;
+  const q=S.qs[S.idx];
+  if(S.isFrac)lockFrac('wrong');else lockSingle('wrong','—');
+  showFb('warn','⏰','Correct: '+q.a,'Time ran out');
+  S.wrong++;S.streak=0;S.mistakes.push({q:q.q,correct:q.a,given:'⏱ time out'});
+  afterAnswer();
+}
+
+/* ═══════════════════════════════
+   SUBMIT / SKIP
+═══════════════════════════════ */
+function handleAction(){if(S.done){nextOrFinish();return;}submitAnswer();}
+function submitAnswer(){
+  if(S.done)return;
+  let given='';
+  if(S.isFrac){
+    if(S.mode==='proper'){
+      if(!S.num){shakeEl($i('ff-num'));return;}
+      if(!S.den||S.den==='0'){warnFb('Enter a denominator (not zero)');return;}
+    } else {
+      if(!S.whole&&!S.num){shakeEl($i('ff-whole'));return;}
+      if(S.num&&(!S.den||S.den==='0')){warnFb('Enter a denominator (not zero)');return;}
+    }
+    given=getFracVal();
+  } else {
+    given=S.val.trim();
+    if(!given){shakeEl($i('ansdisplay'));return;}
+    if(/[\/\.]$/.test(given)){warnFb('Incomplete number — finish typing');return;}
+  }
+  stopTimer();S.done=true;
+  const q=S.qs[S.idx];
+  const t=(Date.now()-S.tStart)/1000;
+  S.timings.push(t);if(t<S.fastest)S.fastest=t;
+  const ok=check(given,q.a);
+  if(ok){
+    if(S.isFrac)lockFrac('correct');else lockSingle('correct',given);
+    S.correct++;S.streak++;if(S.streak>S.best)S.best=S.streak;
+    const msgs=['Correct!','Nice one!','Nailed it!','Spot on!','Perfect!','Great!'];
+    showFb('correct','✅',msgs[ri(0,msgs.length-1)],`in ${t.toFixed(1)}s`);
+  } else {
+    if(S.isFrac)lockFrac('wrong');
+    else{lockSingle('wrong',given);shakeEl($i('ansdisplay'),false);}
+    S.wrong++;S.streak=0;S.mistakes.push({q:q.q,correct:q.a,given});
+    showFb('wrong','❌','Correct: '+q.a,'You entered: '+given);
+  }
+  afterAnswer();
+}
+function skipQ(){
+  if(S.done)return;stopTimer();S.done=true;S.skipped++;S.streak=0;
+  const q=S.qs[S.idx];S.mistakes.push({q:q.q,correct:q.a,given:'⏭ skipped'});
+  if(S.isFrac)lockFrac('wrong');else lockSingle('wrong','—');
+  showFb('warn','⏭','Correct: '+q.a,'Skipped');
+  afterAnswer();
+}
+function afterAnswer(){
+  $i('qstreak').textContent=S.streak>=3?`🔥${S.streak}`:'';
+  $i('skipbtn').disabled=true;
+  $i('actionbtn').textContent=S.idx>=S.qs.length-1?'See Results →':'Next →';
+  $i('nk-next').style.display='none';
+  $i('nk-blank').style.display='none';
+  refreshNumpad();
+}
+function nextOrFinish(){if(!S.done)return;if(S.idx>=S.qs.length-1){showResult();return;}S.idx++;loadQ();}
+function shakeEl(el,restore=true){if(!el)return;el.classList.add('ashake');setTimeout(()=>{el.classList.remove('ashake');if(restore&&!S.done)renderSingle();},300);}
+function warnFb(msg){showFb('warn','⚠️',msg,'');setTimeout(()=>{if(!S.done)$i('fbbox').className='fbbox';},2000);}
+
+/* ═══════════════════════════════
+   FEEDBACK
+═══════════════════════════════ */
+function showFb(type,icon,text,sub){
+  $i('fbicon').textContent=icon;$i('fbtext').textContent=text;$i('fbright').textContent=sub||'';
+  $i('fbbox').className='fbbox '+type+' show';
+}
+
+/* ═══════════════════════════════
+   EXIT MODAL
+═══════════════════════════════ */
+function confirmExit(){$i('exitmodal').classList.add('show');}
+function closeModal(){$i('exitmodal').classList.remove('show');}
+function forceExit(){closeModal();stopTimer();goHome();}
+
+/* ═══════════════════════════════
+   RESULT
+═══════════════════════════════ */
+function showResult(){
+  stopTimer();show('result');
+  const tot=S.correct+S.wrong+S.skipped;
+  const pct=tot>0?Math.round(S.correct/tot*100):0;
+  $i('r-c').textContent=S.correct;$i('r-w').textContent=S.wrong;$i('r-p').textContent=pct+'%';
+  $i('r-str').textContent=S.best;
+  $i('r-avg').textContent=S.timings.length?((S.timings.reduce((a,b)=>a+b,0)/S.timings.length).toFixed(1)+'s'):'—';
+  $i('r-fast').textContent=S.fastest<Infinity?(S.fastest.toFixed(1)+'s'):'—';
+  $i('r-sk').textContent=S.skipped;
+  const t=[[100,'🏆','Perfect!','You aced every question!'],[90,'🔥','Outstanding!','Almost flawless!'],[75,'🎯','Great work!',"You're on track"],[50,'💪','Good effort!',"Keep drilling!"],[25,'📚','Keep practising','Focus on weak spots'],[0,'🤔','Needs more work',"Review the tables daily"]];
+  const[,emoji,title,sub]=t.find(([v])=>pct>=v);
+  $i('remoji').textContent=emoji;$i('rtitle').textContent=title;$i('rsub').textContent=sub;
+  $i('cmsg').textContent=S.best>=10?`🎉 Incredible ${S.best}-streak!`:S.best>=5?`⚡ Best streak: ${S.best}!`:'';
+  const list=$i('mlist');list.innerHTML='';list.classList.remove('open');$i('mtoggle').classList.remove('open');
+  if(!S.mistakes.length){$i('msec').style.display='none';}
+  else{
+    $i('msec').style.display='block';$i('mt-txt').textContent=`Show mistakes (${S.mistakes.length})`;
+    S.mistakes.forEach(m=>{
+      const d=document.createElement('div');d.className='mitem';
+      d.innerHTML=`<div class="mq">${esc(m.q)}</div><div class="mrow"><span class="mc">✓ ${esc(m.correct)}</span><span class="mg">✗ ${esc(m.given)}</span></div>`;
+      list.appendChild(d);
+    });
+  }
+}
+function toggleMistakes(){
+  const btn=$i('mtoggle'),list=$i('mlist');
+  const open=list.classList.toggle('open');btn.classList.toggle('open',open);
+  $i('mt-txt').textContent=open?`Hide mistakes (${S.mistakes.length})`:`Show mistakes (${S.mistakes.length})`;
+}
+function restartSame(){
+  S.qs=buildQs(S.topics,S.totalQ);
+  Object.assign(S,{idx:0,done:false,correct:0,wrong:0,skipped:0,streak:0,best:0,mistakes:[],timings:[],fastest:Infinity});
+  show('quiz');loadQ();
+}
+function goHome(){stopTimer();show('home');}
+
+/* ═══════════════════════════════
+   PHYSICAL KEYBOARD (desktop)
+═══════════════════════════════ */
+document.addEventListener('keydown',e=>{
+  if(!$i('quiz').classList.contains('active'))return;
+  if(S.done){if(e.key==='Enter'||e.key===' '){e.preventDefault();nextOrFinish();}return;}
+  if(e.key==='Enter'){e.preventDefault();submitAnswer();return;}
+  if(e.key==='Backspace'){e.preventDefault();nkDel();return;}
+  if(e.key==='Tab'&&S.isFrac){e.preventDefault();nkNext();return;}
+  if(e.key===' '&&!S.isFrac&&!S.val){e.preventDefault();skipQ();return;}
+  if(/^\d$/.test(e.key))nkp(e.key);
+  if(e.key==='.'&&!S.isFrac)nkDot();
+});
+
+/* Prevent scroll & bounce on quiz screen */
+document.addEventListener('touchmove',e=>{
+  if($i('quiz').classList.contains('active'))e.preventDefault();
+},{passive:false});
+</script>
+</body>
+</html>
