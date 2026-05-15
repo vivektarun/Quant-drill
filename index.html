@@ -48,6 +48,33 @@ body{height:100%;height:-webkit-fill-available;background:var(--bg);color:var(--
 .cdot{position:absolute;top:9px;right:9px;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--ac2));display:none;align-items:center;justify-content:center}
 .cdot svg{width:9px;height:9px;stroke:#fff;stroke-width:2.5;fill:none}
 .tbtn.sel .cdot{display:flex}
+/* Table picker */
+.tpicker{display:none;margin-top:8px;margin-bottom:4px;background:var(--sf2);border:1px solid var(--b2);border-radius:var(--r);padding:12px}
+.tpicker.show{display:block}
+.tpicker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.tpicker-label{font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.07em}
+.tpicker-actions{display:flex;gap:6px}
+.tpa{font-size:11px;font-weight:600;color:var(--ac);cursor:pointer;background:none;border:none;font-family:var(--fs);padding:2px 6px;border-radius:4px}
+.tpa:active{opacity:.7}
+.tpicker-hint{font-size:11px;color:var(--mu);margin-bottom:8px;line-height:1.4}
+.tnum-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:2px}
+.tnum{background:var(--sf);border:1.5px solid var(--b1);border-radius:var(--rs);padding:8px 4px;font-size:13px;font-weight:700;color:var(--mu);cursor:pointer;font-family:var(--fn);text-align:center;transition:all .15s}
+.tnum.on{background:rgba(108,142,247,.18);border-color:var(--ac);color:var(--ac)}
+.tnum:active{transform:scale(.91)}
+/* Range buttons */
+.trange-btns{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.trb{flex:1;min-width:60px;padding:7px 4px;font-size:12px;font-weight:600;background:var(--sf);border:1.5px solid var(--b1);border-radius:var(--rs);color:var(--mu);cursor:pointer;font-family:var(--fn);text-align:center;transition:all .15s;white-space:nowrap}
+.trb.active{background:rgba(108,142,247,.18);border-color:var(--ac);color:var(--ac)}
+.trb:active{transform:scale(.93)}
+/* Skip obvious toggle row */
+.tskip-row{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--b1);gap:12px}
+.tskip-label{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.tskip-sub{font-size:11px;color:var(--mu)}
+/* iOS-style toggle */
+.tog{width:44px;height:26px;border-radius:13px;background:var(--sf);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.tog.on{background:var(--ac)}
+.tog-knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;display:block}
+.tog.on .tog-knob{transform:translateX(18px)}
 .err-msg{font-size:12px;color:var(--rd);margin-bottom:12px;padding:9px 12px;background:rgba(248,113,113,.08);border-radius:var(--rs);border:1px solid rgba(248,113,113,.2);display:none}
 .err-msg.show{display:block}
 .qcrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
@@ -240,7 +267,7 @@ body{height:100%;height:-webkit-fill-available;background:var(--bg);color:var(--
   <div class="topic-grid">
     <button class="tbtn" data-topic="multiplication" onclick="toggleT(this)">
       <div class="cdot"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
-      <div class="ti">✕</div><div class="tn">Multiplication</div><div class="tr">1–20 tables</div>
+      <div class="ti">✕</div><div class="tn">Multiplication</div><div class="tr" id="mul-range-label">1–20 tables</div>
     </button>
     <button class="tbtn" data-topic="squares" onclick="toggleT(this)">
       <div class="cdot"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
@@ -263,6 +290,39 @@ body{height:100%;height:-webkit-fill-available;background:var(--bg);color:var(--
       <div class="ti">%</div><div class="tn">% → Fraction</div><div class="tr">proper &amp; mixed</div>
     </button>
   </div>
+
+  <!-- Table picker — shown when Multiplication is selected -->
+  <div class="tpicker" id="tpicker">
+    <div class="tpicker-head">
+      <span class="tpicker-label">Pick specific tables</span>
+      <div class="tpicker-actions">
+        <button class="tpa" onclick="tpAll()">All</button>
+        <button class="tpa" onclick="tpClear()">Clear</button>
+      </div>
+    </div>
+    <div class="tpicker-hint">Leave all unselected = all tables 2–20</div>
+    <div class="tnum-grid" id="tnum-grid"></div>
+
+    <div class="tpicker-head" style="margin-top:12px">
+      <span class="tpicker-label">Multiplier range (second number)</span>
+    </div>
+    <div class="tpicker-hint">Questions go up to…</div>
+    <div class="trange-btns">
+      <button class="trb" data-max="9"  onclick="setRange(this)">up to 9</button>
+      <button class="trb active" data-max="10" onclick="setRange(this)">up to 10</button>
+      <button class="trb" data-max="15" onclick="setRange(this)">up to 15</button>
+      <button class="trb" data-max="20" onclick="setRange(this)">up to 20</button>
+    </div>
+
+    <div class="tskip-row">
+      <div>
+        <div class="tskip-label">Skip obvious questions</div>
+        <div class="tskip-sub">Removes × 1, × 2, × 10 (trivial)</div>
+      </div>
+      <button class="tog on" id="skip-obvious-btn" onclick="toggleObvious()"><span class="tog-knob"></span></button>
+    </div>
+  </div>
+
   <div id="sel-err" class="err-msg">⚠ Select at least one topic</div>
 
   <div class="sh">Questions per session</div>
@@ -456,7 +516,17 @@ const PCT=[
 ];
 
 const TOPICS={
-  multiplication:{label:'Multiplication',gen(){const a=ri(1,20),b=ri(1,20);return{q:`${a} × ${b} = ?`,a:''+a*b,hint:'',frac:false};}},
+  multiplication:{label:'Multiplication',gen(){
+    const pool=S.mulTables.length?S.mulTables:Array.from({length:19},(_,i)=>i+2); // 2-20, never 1
+    const obvious=new Set(S.skipObvious?[1,2,10]:[1]);
+    // build candidate multiplier list
+    let mults=[];
+    for(let m=2;m<=S.mulMax;m++) if(!obvious.has(m)) mults.push(m);
+    if(!mults.length) mults=[3,4,5,6,7,8,9]; // safety fallback
+    const a=pool[ri(0,pool.length-1)];
+    const b=mults[ri(0,mults.length-1)];
+    return{q:`${a} × ${b} = ?`,a:''+a*b,hint:`table of ${a}`,frac:false};
+  }},
   squares:{label:'Squares',gen(){const n=ri(1,50);return{q:`${n}² = ?`,a:''+n*n,hint:`${n} × ${n}`,frac:false};}},
   cubes:{label:'Cubes',gen(){const n=ri(1,50);return{q:`${n}³ = ?`,a:''+n*n*n,hint:`${n}³`,frac:false};}},
   sqrt:{label:'Square Root',gen(){
@@ -486,7 +556,10 @@ const S={
   correct:0,wrong:0,skipped:0,streak:0,best:0,
   mistakes:[],timings:[],fastest:Infinity,tStart:0,
   isFrac:false,mode:'proper',focus:'num',
-  val:'',whole:'',num:'',den:''
+  val:'',whole:'',num:'',den:'',
+  mulTables:[],   // empty = all 2-20
+  mulMax:10,      // multiplier upper bound
+  skipObvious:true // skip ×1, ×2, ×10
 };
 
 /* ═══════════════════════════════
@@ -525,7 +598,48 @@ function check(given,expected){
 /* ═══════════════════════════════
    HOME
 ═══════════════════════════════ */
-function toggleT(b){b.classList.toggle('sel');$i('sel-err').classList.remove('show');}
+/* ── Table picker init ── */
+(function(){
+  const grid=$i('tnum-grid');
+  // start from 2 — 1 is always trivial
+  for(let n=2;n<=20;n++){
+    const b=document.createElement('button');
+    b.className='tnum';b.textContent=n;b.dataset.n=n;
+    b.onclick=()=>{b.classList.toggle('on');syncMulLabel();};
+    grid.appendChild(b);
+  }
+})();
+
+function syncMulLabel(){
+  S.mulTables=[...$i('tnum-grid').querySelectorAll('.tnum.on')].map(b=>+b.dataset.n);
+  const lbl=$i('mul-range-label');
+  if(!S.mulTables.length) lbl.textContent='2–20 tables';
+  else if(S.mulTables.length===1) lbl.textContent=`table of ${S.mulTables[0]}`;
+  else lbl.textContent=`${S.mulTables.length} tables selected`;
+}
+function tpAll(){$i('tnum-grid').querySelectorAll('.tnum').forEach(b=>b.classList.add('on'));syncMulLabel();}
+function tpClear(){$i('tnum-grid').querySelectorAll('.tnum').forEach(b=>b.classList.remove('on'));syncMulLabel();}
+
+function setRange(btn){
+  document.querySelectorAll('.trb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S.mulMax=+btn.dataset.max;
+}
+
+function toggleObvious(){
+  S.skipObvious=!S.skipObvious;
+  const btn=$i('skip-obvious-btn');
+  btn.classList.toggle('on',S.skipObvious);
+}
+
+function toggleT(b){
+  b.classList.toggle('sel');
+  $i('sel-err').classList.remove('show');
+  // show/hide picker only when multiplication card toggled
+  if(b.dataset.topic==='multiplication'){
+    $i('tpicker').classList.toggle('show', b.classList.contains('sel'));
+  }
+}
 function setQC(b){document.querySelectorAll('.qcb').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.totalQ=+b.dataset.n;}
 function buildQs(topics,n){
   const a=[];
@@ -536,6 +650,7 @@ function startPractice(){
   const sel=[...$i('home').querySelectorAll('.tbtn.sel')].map(b=>b.dataset.topic);
   if(!sel.length){$i('sel-err').classList.add('show');return;}
   S.topics=sel;S.totalQ=+document.querySelector('.qcb.active').dataset.n;
+  // mulTables already synced live; no extra work needed
   S.qs=buildQs(sel,S.totalQ);
   Object.assign(S,{idx:0,done:false,correct:0,wrong:0,skipped:0,streak:0,best:0,mistakes:[],timings:[],fastest:Infinity});
   show('quiz');loadQ();
